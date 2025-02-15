@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hospital Management System - CRUD Operations</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    .search-container {
+      margin: 20px 0;
+      position: relative;
+    }
+    .search-input {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      width: 250px;
+      font-size: 14px;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: #4285f4;
+      box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Navigation -->
+  <nav class="bg-blue-600 text-white">
+    <div class="container mx-auto px-6 py-4">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center">
+          <i class="fas fa-hospital text-3xl mr-3"></i>
+          <span class="text-xl font-bold">Online Health Consultation Support System</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mx-auto mt-5">
+    <h1 class="mb-4 text-center text-2xl font-bold">Doctor Information</h1>
+    
+    <div class="search-container flex justify-center">
+      <input type="text"
+             class="search-input"
+             placeholder="Search doctors..."
+             id="searchInput"
+             onkeyup="searchDoctors()">
+    </div>
+
+    <div class="bg-white shadow-md rounded my-6">
+      <table class="min-w-full divide-y divide-gray-200" id="doctorTable">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">DOCTOR ID</th>
+            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">NAME</th>
+            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">EXPERTISE</th>
+            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">AVAILABILITY</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <!-- ข้อมูลจาก API จะถูกเพิ่มที่นี่ -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // ดึงข้อมูลแพทย์จาก API เมื่อโหลดหน้าเว็บ
+    get_doctor();
+
+    function get_doctor() {
+      fetch('https://mini-pj-bn.vercel.app/getDoctors/')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('Data received:', data);
+          var tableRef = document.querySelector("#doctorTable tbody");
+          tableRef.innerHTML = ""; // เคลียร์ข้อมูลเดิมในตาราง
+
+          data.forEach(element => {
+            // สมมติว่า API มีฟิลด์: doctor_id, name, expertise, availability
+            let row = document.createElement("tr");
+            row.innerHTML = `
+              <td class="px-6 py-4 whitespace-nowrap text-center">${element.doctor_id}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-center">${element.name}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-center">${element.expertise || 'N/A'}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-center">${element.availability || 'N/A'}</td>
+            `;
+            tableRef.appendChild(row);
+          });
+        })
+        .catch(error => {
+          console.error('There was a problem with the fetch operation:', error);
+        });
+    }
+
+    // ฟังก์ชันค้นหาแพทย์ในตาราง
+    function searchDoctors() {
+      const input = document.getElementById('searchInput');
+      const filter = input.value.toUpperCase();
+      const table = document.getElementById('doctorTable');
+      const rows = table.getElementsByTagName('tr');
+
+      for (let i = 1; i < rows.length; i++) {
+        let found = false;
+        const cells = rows[i].getElementsByTagName('td');
+
+        for (let j = 0; j < cells.length; j++) {
+          const cell = cells[j];
+          if (cell) {
+            const textValue = cell.textContent || cell.innerText;
+            if (textValue.toUpperCase().indexOf(filter) > -1) {
+              found = true;
+              break;
+            }
+          }
+        }
+
+        rows[i].style.display = found ? '' : 'none';
+      }
+    }
+  </script>
+</body>
+</html>
+
