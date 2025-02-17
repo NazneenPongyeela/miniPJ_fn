@@ -204,22 +204,31 @@
     async function sendNewChat() {
       const message = document.getElementById('newChatMessage').value.trim();
       const patientId = document.getElementById('patientId').value.trim();
-      
+    
       if (!message || !patientId) {
         alert('Please fill in both Patient ID and Message fields');
         return;
       }
-
+    
       const payload = {
-        chatId: 'CHT' + Date.now(),
-        patientId: patientId,
-        message: message,
-        timestamp: new Date().toISOString()
+        chat_id: 'CHT' + Date.now(),
+        user_id: patientId,  // ใช้ patientId เป็น user_id
+        message: message
       };
-
+    
       try {
-        // Demo alert (replace with actual API call)
-        alert(`(Demo) New chat sent for Patient ID: ${patientId}\nMessage: ${message}`);
+        const response = await fetch(`${BASE_URL}/addChatHistory`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
+        });
+    
+        if (!response.ok) {
+          throw new Error('Failed to save chat');
+        }
+    
         closeChatModal();
         loadChatHistory();
       } catch (error) {
@@ -227,6 +236,7 @@
         alert('Failed to send message: ' + error.message);
       }
     }
+
   </script>
 </body>
 </html>
