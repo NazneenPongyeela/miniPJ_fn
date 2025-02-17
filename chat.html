@@ -20,7 +20,7 @@
     </div>
   </nav>
 
-  <!-- Search Chat History -->
+<!-- Search Chat History -->
   <div class="max-w-4xl mx-auto mt-4 mb-8">
     <h2 class="text-xl font-bold mb-2">Search Chat History</h2>
     <div class="flex gap-2">
@@ -67,16 +67,18 @@
           <i class="fas fa-times"></i>
         </button>
       </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Patient ID</label>
-        <input
-          id="patientId"
-          type="text"
-          class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          placeholder="Enter Patient ID"
-        />
-      </div>
       <div class="space-y-4">
+        <!-- Added Patient ID Field -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Patient ID</label>
+          <input
+            type="text"
+            id="patientId"
+            class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Enter patient ID"
+            required
+          />
+        </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
           <textarea
@@ -134,12 +136,11 @@
     async function searchChatHistory() {
       const chatId = document.getElementById('chatIdInput').value.trim();
       if (!chatId) {
-        loadChatHistory(); // If no ID, show all chats
+        loadChatHistory();
         return;
       }
 
       try {
-        // Filter existing messages by chatId
         const filteredMessages = messages.filter(msg => 
           msg.chatId.toLowerCase().includes(chatId.toLowerCase())
         );
@@ -162,22 +163,28 @@
       });
     }
 
-      function createChatCard(chat) {
-        const dateTime = new Date(chat.timestamp).toLocaleString();
-        return `
-          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 transition-all hover:shadow-md">
-            <div class="flex justify-between items-start mb-4">
-              <span class="font-medium text-gray-900">Chat ID: ${chat.chat_id || 'No ID'}</span>
-              <span class="text-sm text-gray-500">Patient ID: ${chat.user_id || 'N/A'}</span>
-              <button onclick="handleDelete('${chat.chat_id}')" class="text-gray-400 hover:text-red-600 transition-colors">
-                <i class="fa-solid fa-trash"></i>
-              </button>
+    function createChatCard(chat) {
+      const dateTime = new Date(chat.timestamp).toLocaleString();
+      return `
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 transition-all hover:shadow-md">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <span class="font-medium text-gray-900">${chat.chatId || 'No ID'}</span>
+              ${chat.patientId ? `<p class="text-sm text-gray-600">Patient ID: ${chat.patientId}</p>` : ''}
             </div>
-            <p class="text-gray-800">${chat.message || ''}</p>
-            <div class="text-sm text-gray-500 mt-4">${dateTime}</div>
+            <button onclick="handleDelete('${chat.chatId}')" class="text-gray-400 hover:text-red-600 transition-colors">
+              <i class="fa-solid fa-trash"></i>
+            </button>
           </div>
-        `;
-      }
+          
+          <p class="text-gray-800">${chat.message || ''}</p>
+          
+          <div class="text-sm text-gray-500 mt-4">
+            ${dateTime}
+          </div>
+        </div>
+      `;
+    }
 
     function handleDelete(chatId) {
       if (!confirm('Are you sure you want to delete this chat?')) return;
@@ -191,36 +198,28 @@
     function closeChatModal() {
       chatModal.classList.add('hidden');
       document.getElementById('newChatMessage').value = '';
+      document.getElementById('patientId').value = '';
     }
 
     async function sendNewChat() {
       const message = document.getElementById('newChatMessage').value.trim();
       const patientId = document.getElementById('patientId').value.trim();
-    
+      
       if (!message || !patientId) {
         alert('Please fill in both Patient ID and Message fields');
         return;
       }
-    
+
       const payload = {
-        chat_id: 'CHT' + Date.now(),
-        user_id: patientId,  // ใช้ patientId เป็น user_id
-        message: message
+        chatId: 'CHT' + Date.now(),
+        patientId: patientId,
+        message: message,
+        timestamp: new Date().toISOString()
       };
-    
+
       try {
-        const response = await fetch(`${BASE_URL}/addChatHistory`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload)
-        });
-    
-        if (!response.ok) {
-          throw new Error('Failed to save chat');
-        }
-    
+        // Demo alert (replace with actual API call)
+        alert(`(Demo) New chat sent for Patient ID: ${patientId}\nMessage: ${message}`);
         closeChatModal();
         loadChatHistory();
       } catch (error) {
@@ -228,7 +227,6 @@
         alert('Failed to send message: ' + error.message);
       }
     }
-
   </script>
 </body>
 </html>
