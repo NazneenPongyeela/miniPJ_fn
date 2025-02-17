@@ -242,45 +242,47 @@
       document.getElementById('patientId').value = '';
     }
 
-    async function sendNewChat() {
-      const message = document.getElementById('newChatMessage').value.trim();
-      const patientId = document.getElementById('patientId').value.trim();
+  async function sendNewChat() {
+  const message = document.getElementById('newChatMessage').value.trim();
+  const patientId = document.getElementById('patientId').value.trim();
+  
+  if (!message || !patientId) {
+    alert('Please fill in both Patient ID and Message fields');
+    return;
+  }
+  
+  const chatId = 'CHT' + Date.now();
+  const payload = {
+    chat_id: chatId,
+    user_id: patientId,
+    message: message
+  };
+  
+  try {
+    const response = await fetch(`${BASE_URL}/addChatHistory`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
     
-      if (!message || !patientId) {
-        alert('Please fill in both Patient ID and Message fields');
-        return;
-      }
-    
-      const chatId = 'CHT' + Date.now();
-      const payload = {
-        chat_id: chatId,
-        user_id: patientId,
-        message: message
-      };
-    
-      try {
-        const response = await fetch(`${BASE_URL}/addChatHistory`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload)
-        });
-    
-        if (!response.ok) {
-          throw new Error('Failed to save chat');
-        }
-    
-        // Show notification with chat details
-        showNotification(`Chat created successfully!\nChat ID: ${chatId}\nPatient ID: ${patientId}`);
-        
-        closeChatModal();
-        loadChatHistory();
-      } catch (error) {
-        console.error('Error sending new chat:', error);
-        alert('Failed to send message: ' + error.message);
-      }
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.msg || 'Failed to save chat');
     }
+    
+    // Show notification with chat details
+    showNotification(`Chat created successfully!\nChat ID: ${chatId}\nPatient ID: ${patientId}`);
+    
+    closeChatModal();
+    loadChatHistory();
+  } catch (error) {
+    console.error('Error sending new chat:', error);
+    alert('Failed to send message: ' + error.message);
+  }
+}
+
 
   function showNotification(message, type = 'success') {
     const notification = document.getElementById('notification');
