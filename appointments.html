@@ -232,24 +232,72 @@
       }
 
       // Add new appointment
-      async function addAppointment(formData) {
-          try {
-              const response = await fetch(`${BASE_URL}/addAppointments/`, {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify(formData)
-              });
+      // async function addAppointment(formData) {
+      //     try {
+      //         const response = await fetch(`${BASE_URL}/addAppointments/`, {
+      //             method: 'POST',
+      //             headers: {
+      //                 'Content-Type': 'application/json',
+      //             },
+      //             body: JSON.stringify(formData)
+      //         });
               
-              if (response.ok) {
-                  hideModal();
-                  loadAppointments();
-              }
-          } catch (error) {
-              console.error('Error adding appointment:', error);
-          }
-      }
+      //         if (response.ok) {
+      //             hideModal();
+      //             loadAppointments();
+      //         }
+      //     } catch (error) {
+      //         console.error('Error adding appointment:', error);
+      //     }
+      // }
+      function formatDate(inputDate) {
+    const date = new Date(inputDate);
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Add 1 because months in JavaScript are 0-based
+    const day = date.getDate().toString().padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+}
+
+async function addAppointment(formData) {
+    try {
+        // Check if formData is valid before sending
+        if (!formData.user_id || !formData.doctor_id || !formData.appointment_date) {
+            alert("Please fill in all the required fields.");
+            return;
+        }
+
+        // Format the appointment date to YYYY-MM-DD
+        const formattedDate = formatDate(formData.appointment_date);
+        
+        // Update formData with the formatted date
+        formData.appointment_date = formattedDate;
+
+        const response = await fetch(`${BASE_URL}/addAppointments/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+        });
+
+        if (response.ok) {
+            // If the response is successful
+            const data = await response.json(); // If you need data from the response
+            hideModal();
+            loadAppointments(); // Reload the appointments list
+        } else {
+            // If the response is unsuccessful
+            const errorData = await response.json();
+            alert(`Error: ${errorData.msg || 'Something went wrong'}`);
+        }
+    } catch (error) {
+        // Catch and log any errors from the fetch request
+        console.error('Error adding appointment:', error);
+        alert("An error occurred while connecting to the server. Please try again.");
+    }
+}
+
 
       // Delete appointment
       async function deleteAppointment(id) {
