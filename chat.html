@@ -19,6 +19,13 @@
       </div>
     </div>
   </nav>
+ <!-- Notification Toast -->
+  <div id="notification" class="hidden fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
+    <div class="flex items-center gap-2">
+      <i class="fas fa-check-circle"></i>
+      <span id="notificationMessage"></span>
+    </div>
+  </div>
 
 <!-- Search Chat History -->
   <div class="max-w-4xl mx-auto mt-4 mb-8">
@@ -169,15 +176,19 @@
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 transition-all hover:shadow-md">
           <div class="flex justify-between items-start mb-4">
             <div>
-              <span class="font-medium text-gray-900">${chat.chatId || 'No ID'}</span>
-              ${chat.patientId ? `<p class="text-sm text-gray-600">Patient ID: ${chat.patientId}</p>` : ''}
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-medium text-gray-900">Chat ID: ${chat.chat_id || 'No ID'}</span>
+              </div>
+              <div class="text-sm text-gray-600">
+                <p>Patient ID: ${chat.user_id || 'No Patient ID'}</p>
+              </div>
             </div>
-            <button onclick="handleDelete('${chat.chatId}')" class="text-gray-400 hover:text-red-600 transition-colors">
+            <button onclick="handleDelete('${chat.chat_id}')" class="text-gray-400 hover:text-red-600 transition-colors">
               <i class="fa-solid fa-trash"></i>
             </button>
           </div>
           
-          <p class="text-gray-800">${chat.message || ''}</p>
+          <p class="text-gray-800 mt-2">${chat.message || ''}</p>
           
           <div class="text-sm text-gray-500 mt-4">
             ${dateTime}
@@ -201,7 +212,7 @@
       document.getElementById('patientId').value = '';
     }
 
-    async function sendNewChat() {
+     async function sendNewChat() {
       const message = document.getElementById('newChatMessage').value.trim();
       const patientId = document.getElementById('patientId').value.trim();
     
@@ -210,9 +221,10 @@
         return;
       }
     
+      const chatId = 'CHT' + Date.now();
       const payload = {
-        chat_id: 'CHT' + Date.now(),
-        user_id: patientId,  // ใช้ patientId เป็น user_id
+        chat_id: chatId,
+        user_id: patientId,
         message: message
       };
     
@@ -229,12 +241,32 @@
           throw new Error('Failed to save chat');
         }
     
+        // Show notification with chat details
+        showNotification(`Chat created successfully!\nChat ID: ${chatId}\nPatient ID: ${patientId}`);
+        
         closeChatModal();
         loadChatHistory();
       } catch (error) {
         console.error('Error sending new chat:', error);
         alert('Failed to send message: ' + error.message);
       }
+    }
+
+    function showNotification(message) {
+      const notification = document.getElementById('notification');
+      const notificationMessage = document.getElementById('notificationMessage');
+      
+      notificationMessage.textContent = message;
+      notification.classList.remove('hidden');
+      
+      // Add animation classes
+      notification.classList.add('animate-fade-in');
+      
+      // Hide notification after 5 seconds
+      setTimeout(() => {
+        notification.classList.add('hidden');
+        notification.classList.remove('animate-fade-in');
+      }, 5000);
     }
 
   </script>
