@@ -189,17 +189,38 @@
 
     async function sendNewChat() {
       const message = document.getElementById('newChatMessage').value.trim();
-      if (!message) return;
-
+      const patientId = document.getElementById('patientId').value.trim();
+      
+      if (!message || !patientId) {
+        alert('Please fill in both Patient ID and Message fields');
+        return;
+      }
+    
       const payload = {
-        chatId: 'CHT' + Date.now(),
-        message: message,
-        timestamp: new Date().toISOString()
+        chat_id: 'CHT' + Date.now(),
+        user_id: patientId,  // ใช้ patientId เป็น user_id
+        doctor_id: "DOC001", // ต้องกำหนด doctor_id ตามระบบของคุณ
+        message: message
       };
-
+    
       try {
-        // Demo alert (replace with actual API call)
-        alert(`(Demo) New chat sent: ${message}`);
+        const response = await fetch(`${BASE_URL}/addChatHistory`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
+        });
+    
+        if (!response.ok) {
+          throw new Error('Failed to save chat');
+        }
+    
+        const result = await response.json();
+        if (result.error) {
+          throw new Error(result.msg || 'Failed to save chat');
+        }
+    
         closeChatModal();
         loadChatHistory();
       } catch (error) {
