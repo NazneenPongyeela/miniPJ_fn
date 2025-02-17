@@ -231,73 +231,26 @@
           }
       }
 
-      // Add new appointment
-      // async function addAppointment(formData) {
-      //     try {
-      //         const response = await fetch(`${BASE_URL}/addAppointments/`, {
-      //             method: 'POST',
-      //             headers: {
-      //                 'Content-Type': 'application/json',
-      //             },
-      //             body: JSON.stringify(formData)
-      //         });
+      Add new appointment
+      async function addAppointment(formData) {
+          try {
+              const response = await fetch(`${BASE_URL}/addAppointments/`, {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(formData)
+              });
               
-      //         if (response.ok) {
-      //             hideModal();
-      //             loadAppointments();
-      //         }
-      //     } catch (error) {
-      //         console.error('Error adding appointment:', error);
-      //     }
-      // }
-     function formatDate(inputDate) {
-    const date = new Date(inputDate);
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // เพิ่ม 1 เพราะเดือนใน JavaScript เริ่มต้นที่ 0
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
+              if (response.ok) {
+                  hideModal();
+                  loadAppointments();
+              }
+          } catch (error) {
+              console.error('Error adding appointment:', error);
+          }
+      }
     
-    return `${year}-${month}-${day} ${hours}:${minutes}:00`; // เปลี่ยนเป็นรูปแบบที่เหมาะสมกับฐานข้อมูล
-}
-
-async function addAppointment(formData) {
-    try {
-        // ตรวจสอบข้อมูลฟอร์มก่อนส่ง
-        if (!formData.patientId || !formData.doctorId || !formData.date) {
-            alert("Please fill in all the required fields.");
-            return;
-        }
-
-        // แปลงวันที่และเวลาให้เป็นรูปแบบที่เซิร์ฟเวอร์ต้องการ
-        const formattedDate = formatDate(formData.date);
-
-        // อัปเดต formData ด้วยวันที่ที่ถูกแปลง
-        formData.date = formattedDate;
-
-        const response = await fetch(`${BASE_URL}/addAppointments/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData),
-        });
-
-        if (response.ok) {
-            const data = await response.json(); // หากต้องการข้อมูลจากการตอบกลับ
-            hideModal();
-            loadAppointments(); // รีเฟรชรายการนัดหมาย
-        } else {
-            const errorData = await response.json();
-            alert(`Error: ${errorData.msg || 'Something went wrong'}`);
-        }
-    } catch (error) {
-        console.error('Error adding appointment:', error);
-        alert("An error occurred while connecting to the server. Please try again.");
-    }
-}
-
-      
 
       // Delete appointment
       async function deleteAppointment(id) {
