@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat History</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
+</head>
+<body class="bg-gray-50">
+  <!-- Navigation -->
+  <nav class="bg-blue-600 text-white">
+    <div class="container mx-auto px-6 py-4">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center">
+          <i class="fas fa-hospital text-3xl mr-3"></i>
+          <span class="text-xl font-bold">Online Health Consultation Support System</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Search Chat History -->
+  <div class="max-w-4xl mx-auto mt-4 mb-8">
+    <h2 class="text-xl font-bold mb-2">Search Chat History</h2>
+    <div class="flex gap-2">
+      <input 
+        type="text" 
+        id="chatIdInput" 
+        class="border border-gray-300 rounded p-2 w-full"
+        placeholder="Enter Chat ID (e.g. CHT001)"
+      />
+      <button 
+        id="searchBtn"
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+      >
+        <i class="fas fa-search"></i> Search
+      </button>
+    </div>
+  </div>
+
+  <div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6 mt-4">
+      <h1 class="text-2xl font-bold text-gray-900">Chat History</h1>
+      <button
+        id="startChatBtn"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+      >
+        <i class="fa-solid fa-message"></i>
+        Start Chat
+      </button>
+    </div>
+
+    <!-- Chat List -->
+    <div id="chatList" class="space-y-4 mb-20">
+      <!-- Will be populated by JavaScript -->
+    </div>
+  </div>
+
+  <!-- Start Chat Modal -->
+  <div id="chatModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-full max-w-lg">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold">Start New Chat</h3>
+        <button onclick="closeChatModal()" class="text-gray-500 hover:text-gray-700">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+          <textarea
+            id="newChatMessage"
+            rows="4"
+            class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Type your message..."
+          ></textarea>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button
+            onclick="closeChatModal()"
+            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            onclick="sendNewChat()"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const BASE_URL = 'https://mini-pj-bn.vercel.app';
+    let messages = [];
+
+    // Elements
+    const chatList = document.getElementById('chatList');
+    const searchBtn = document.getElementById('searchBtn');
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+      loadChatHistory();
+      document.getElementById('startChatBtn').addEventListener('click', openChatModal);
+      searchBtn.addEventListener('click', searchChatHistory);
+    });
+
+    async function loadChatHistory() {
+      try {
+        const response = await fetch(`${BASE_URL}/getChatHistory/`);
+        if (!response.ok) throw new Error('Failed to fetch chat history');
+        const data = await response.json();
+        messages = data;
+        renderChatList(messages);
+      } catch (error) {
+        console.error('Error loading chat history:', error);
+      }
+    }
+
+    async function searchChatHistory() {
+      const chatId = document.getElementById('chatIdInput').value.trim();
+      if (!chatId) {
+        loadChatHistory(); // If no ID, show all chats
+        return;
+      }
+
+      try {
+        // Filter existing messages by chatId
+        const filteredMessages = messages.filter(msg => 
+          msg.chatId.toLowerCase().includes(chatId.toLowerCase())
+        );
+        renderChatList(filteredMessages);
+      } catch (error) {
+        console.error('Error searching chat history:', error);
+        alert('Error searching chat history: ' + error.message);
+      }
+    }
+
+    function renderChatList(chats) {
+      chatList.innerHTML = '';
+      if (!Array.isArray(chats) || chats.length === 0) {
+        chatList.innerHTML = '<p class="text-gray-500">No chat history found.</p>';
+        return;
+      }
+
+      chats.forEach(chat => {
+        chatList.innerHTML += createChatCard(chat);
+      });
+    }
+
+    function createChatCard(chat) {
+      const dateTime = new Date(chat.timestamp).toLocaleString();
+      return `
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 transition-all hover:shadow-md">
+          <div class="flex justify-between items-start mb-4">
+            <span class="font-medium text-gray-900">${chat.chatId || 'No ID'}</span>
+            <button onclick="handleDelete('${chat.chatId}')" class="text-gray-400 hover:text-red-600 transition-colors">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+          
+          <p class="text-gray-800">${chat.message || ''}</p>
+          
+          <div class="text-sm text-gray-500 mt-4">
+            ${dateTime}
+          </div>
+        </div>
+      `;
+    }
+
+    function handleDelete(chatId) {
+      if (!confirm('Are you sure you want to delete this chat?')) return;
+      alert(`(Demo) Deleted chat ID: ${chatId}`);
+    }
+
+    function openChatModal() {
+      chatModal.classList.remove('hidden');
+    }
+
+    function closeChatModal() {
+      chatModal.classList.add('hidden');
+      document.getElementById('newChatMessage').value = '';
+    }
+
+    async function sendNewChat() {
+      const message = document.getElementById('newChatMessage').value.trim();
+      if (!message) return;
+
+      const payload = {
+        chatId: 'CHT' + Date.now(),
+        message: message,
+        timestamp: new Date().toISOString()
+      };
+
+      try {
+        // Demo alert (replace with actual API call)
+        alert(`(Demo) New chat sent: ${message}`);
+        closeChatModal();
+        loadChatHistory();
+      } catch (error) {
+        console.error('Error sending new chat:', error);
+        alert('Failed to send message: ' + error.message);
+      }
+    }
+  </script>
+</body>
+</html>
