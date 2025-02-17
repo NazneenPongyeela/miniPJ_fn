@@ -250,28 +250,30 @@
       //         console.error('Error adding appointment:', error);
       //     }
       // }
-      function formatDate(inputDate) {
+     function formatDate(inputDate) {
     const date = new Date(inputDate);
     const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Add 1 because months in JavaScript are 0-based
+    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // เพิ่ม 1 เพราะเดือนใน JavaScript เริ่มต้นที่ 0
     const day = date.getDate().toString().padStart(2, '0');
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
     
-    return `${year}-${month}-${day}`;
+    return `${year}-${month}-${day} ${hours}:${minutes}:00`; // เปลี่ยนเป็นรูปแบบที่เหมาะสมกับฐานข้อมูล
 }
 
 async function addAppointment(formData) {
     try {
-        // Check if formData is valid before sending
-        if (!formData.user_id || !formData.doctor_id || !formData.appointment_date) {
+        // ตรวจสอบข้อมูลฟอร์มก่อนส่ง
+        if (!formData.patientId || !formData.doctorId || !formData.date) {
             alert("Please fill in all the required fields.");
             return;
         }
 
-        // Format the appointment date to YYYY-MM-DD
-        const formattedDate = formatDate(formData.appointment_date);
-        
-        // Update formData with the formatted date
-        formData.appointment_date = formattedDate;
+        // แปลงวันที่และเวลาให้เป็นรูปแบบที่เซิร์ฟเวอร์ต้องการ
+        const formattedDate = formatDate(formData.date);
+
+        // อัปเดต formData ด้วยวันที่ที่ถูกแปลง
+        formData.date = formattedDate;
 
         const response = await fetch(`${BASE_URL}/addAppointments/`, {
             method: 'POST',
@@ -282,22 +284,20 @@ async function addAppointment(formData) {
         });
 
         if (response.ok) {
-            // If the response is successful
-            const data = await response.json(); // If you need data from the response
+            const data = await response.json(); // หากต้องการข้อมูลจากการตอบกลับ
             hideModal();
-            loadAppointments(); // Reload the appointments list
+            loadAppointments(); // รีเฟรชรายการนัดหมาย
         } else {
-            // If the response is unsuccessful
             const errorData = await response.json();
             alert(`Error: ${errorData.msg || 'Something went wrong'}`);
         }
     } catch (error) {
-        // Catch and log any errors from the fetch request
         console.error('Error adding appointment:', error);
         alert("An error occurred while connecting to the server. Please try again.");
     }
 }
 
+      
 
       // Delete appointment
       async function deleteAppointment(id) {
