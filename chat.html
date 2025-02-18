@@ -256,7 +256,6 @@
     return;
   }
 
-  const chatId = 'CHT' + Date.now();
   const payload = { chat_id: chatId, user_id: patientId, message: message };
 
   console.log("Sending chat:", payload);
