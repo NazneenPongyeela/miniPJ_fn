@@ -141,21 +141,22 @@
     <!-- Modal Form -->
     <div id="appointmentModal" class="modal">
         <div class="modal-content">
-            <h2>New Appointment</h2>
+            <h2 id="modalTitle">New Appointment</h2>
             <form id="appointmentForm">
+                <input type="hidden" id="appointmentId">
                 <div class="form-group">
-                    <label for="patientId">Patient ID</label>
-                    <input type="text" id="patientId" required>
+                    <label for="userId">Patient id</label>
+                    <input type="text" id="userId" required>
                 </div>
                 <div class="form-group">
-                    <label for="doctor">Doctor</label>
-                    <select id="doctor" required>
+                    <label for="doctorId">Doctor</label>
+                    <select id="doctorId" required>
                         <option value="">Select Doctor</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="appointmentDate">Date & Time</label>
-                    <input type="datetime-local" id="appointmentDate" required>
+                    <label for="appointmentDate">Date</label>
+                    <input type="date" id="appointmentDate" required>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="modal-btn cancel-btn" onclick="hideModal()">Cancel</button>
@@ -173,42 +174,41 @@
             loadDoctors();
         });
 
-        // Load all appointments
+        // Load appointments
         async function loadAppointments() {
-    try {
-        const response = await fetch(`${BASE_URL}/getAppointments/`);
-        const appointments = await response.json();
-        console.log('Appointments:', appointments);  // เพิ่มคำสั่งนี้เพื่อตรวจสอบ
-        const appointmentsList = document.getElementById('appointmentsList');
-        appointmentsList.innerHTML = '';
-
-        appointments.forEach(appointment => {
-            appointmentsList.innerHTML += `
-                <div class="appointment-card">
-                    <div class="appointment-header">
-                        <span class="appointment-id">${appointment.appointment_id}</span>
-                        <div class="appointment-actions">
-                            <button class="action-btn edit-btn" onclick="editAppointment('${appointment.appointment_id}')">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="action-btn delete-btn" onclick="deleteAppointment('${appointment.appointment_id}')">
-                                <i class="fas fa-trash"></i>
-                            </button>
+            try {
+                const response = await fetch(`${BASE_URL}/getAppointments/`);
+                const appointments = await response.json();
+                const appointmentsList = document.getElementById('appointmentsList');
+                appointmentsList.innerHTML = '';
+        
+                appointments.forEach(appointment => {
+                    appointmentsList.innerHTML += `
+                        <div class="appointment-card">
+                            <div class="appointment-header">
+                                <span class="appointment-id">ID: ${appointment.appointment_id}</span>
+                                <div class="appointment-actions">
+                                    <button class="action-btn edit-btn" onclick="editAppointment('${appointment.appointment_id}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="action-btn delete-btn" onclick="deleteAppointment('${appointment.appointment_id}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="appointment-details">
+                                <p>User ID: ${appointment.user_id}</p>
+                                <p>Doctor ID: ${appointment.doctor_id}</p>
+                                <p>Date: ${new Date(appointment.appointment_date).toLocaleDateString()}</p>
+                            </div>
                         </div>
-                    </div>
-                    <div class="appointment-details">
-                        <p>Patient: ${appointment.user_id}</p>
-                        <p>Doctor: ${appointment.doctor_id}</p>
-                        <p>Date: ${new Date(appointment.appointment_date).toLocaleString()}</p>
-                        <div class="status-badge">${appointment.status}</div>
-                    </div>
-                </div>
-            `;
-        });
-    } catch (error) {
-        console.error('Error loading appointments:', error);
-    }
-}
+                    `;
+                });
+            } catch (error) {
+                console.error('Error loading appointments:', error);
+                alert('Error loading appointments: ' + error.message);
+            }
+        }
 
 
         // Load doctors for dropdown
@@ -254,20 +254,26 @@
             return dateTimeString.split('T')[0];
         }
         
-        // Add new appointment
+         // Add new appointment
         async function addAppointment(formData) {
             try {
-                const response = await fetch(`${BASE_URL}/addAppointments/`, {
+                const response = await fetch(`${BASE_URL}/addAppointments`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify({
+                        appointment_id: 'APT' + Date.now(),
+                        user_id: formData.userId,
+                        doctor_id: formData.doctorId,
+                        appointment_date: formData.appointmentDate
+                    })
                 });
+                
                 const result = await response.json();
                 
                 if (!result.error) {
-                    alert("Appointment Added Successfully");
+                    alert("Appointment added successfully");
                     hideModal();
                     await loadAppointments();
                 } else {
@@ -278,24 +284,21 @@
                 alert('Error adding appointment: ' + error.message);
             }
         }
+        
         // Edit appointment
         async function editAppointment(id) {
             try {
-                // ดึงข้อมูล appointment ที่ต้องการแก้ไข
-                const appointment = await fetch(`${BASE_URL}/getAppointments/${id}`);
-                const data = await appointment.json();
+                const response = await fetch(`${BASE_URL}/getAppointments/${id}`);
+                const data = await response.json();
                 
                 if (data && data.length > 0) {
-                    const apt = data[0];
+                    const appointment = data[0];
+                    document.getElementById('modalTitle').textContent = 'Edit Appointment';
+                    document.getElementById('appointmentId').value = appointment.appointment_id;
+                    document.getElementById('userId').value = appointment.user_id;
+                    document.getElementById('doctorId').value = appointment.doctor_id;
+                    document.getElementById('appointmentDate').value = appointment.appointment_date.split('T')[0];
                     
-                    // แสดง modal พร้อมข้อมูลเดิม
-                    document.getElementById('patientId').value = apt.user_id;
-                    document.getElementById('doctor').value = apt.doctor_id;
-                    document.getElementById('appointmentDate').value = apt.appointment_date.split('T')[0];
-                    
-                    // เปลี่ยน modal เป็นโหมดแก้ไข
-                    document.getElementById('appointmentModal').setAttribute('data-mode', 'edit');
-                    document.getElementById('appointmentModal').setAttribute('data-id', id);
                     showModal();
                 }
             } catch (error) {
@@ -314,14 +317,16 @@
                     },
                     body: JSON.stringify({
                         appointment_id: id,
-                        ...formData
+                        user_id: formData.userId,
+                        doctor_id: formData.doctorId,
+                        appointment_date: formData.appointmentDate
                     })
                 });
                 
                 const result = await response.json();
                 
                 if (!result.error) {
-                    alert("Appointment Updated Successfully");
+                    alert("Appointment updated successfully");
                     hideModal();
                     await loadAppointments();
                 } else {
@@ -335,30 +340,30 @@
 
         // Delete appointment
         async function deleteAppointment(id) {
-    if (confirm('Are you sure you want to delete this appointment?')) {
-        try {
-            const response = await fetch(`${BASE_URL}/deleteAppointments`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ appointment_id: id })
-            });
-            
-            const result = await response.json();
-            
-            if (!result.error) {
-                alert('Appointment deleted successfully');
-                await loadAppointments();
-            } else {
-                alert(result.msg || 'Failed to delete appointment');
+            if (confirm('Are you sure you want to delete this appointment?')) {
+            try {
+                const response = await fetch(`${BASE_URL}/deleteAppointments`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ appointment_id: id })
+                });
+                
+                const result = await response.json();
+                
+                if (!result.error) {
+                    alert('Appointment deleted successfully');
+                    await loadAppointments();
+                } else {
+                    alert(result.msg || 'Failed to delete appointment');
+                }
+            } catch (error) {
+                console.error('Error deleting appointment:', error);
+                alert('Error deleting appointment');
             }
-        } catch (error) {
-            console.error('Error deleting appointment:', error);
-            alert('Error deleting appointment');
         }
     }
-}
         // Show modal
         function showModal() {
             document.getElementById('appointmentModal').style.display = 'block';
@@ -371,17 +376,24 @@
         }
 
         // Form submit handler
-        document.getElementById('appointmentForm').addEventListener('submit', function(e) {
+        document.getElementById('appointmentForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-
+            
             const formData = {
-                patientId: document.getElementById('patientId').value,
-                doctorId: document.getElementById('doctor').value,
-                date: document.getElementById('appointmentDate').value,
-                status: 'Scheduled'
+                userId: document.getElementById('userId').value,
+                doctorId: document.getElementById('doctorId').value,
+                appointmentDate: document.getElementById('appointmentDate').value
             };
-
-            addAppointment(formData);
+        
+            const appointmentId = document.getElementById('appointmentId').value;
+            
+            if (appointmentId) {
+                // Edit existing appointment
+                await updateAppointment(appointmentId, formData);
+            } else {
+                // Add new appointment
+                await addAppointment(formData);
+            }
         });
 
         // Close modal when clicking outside
