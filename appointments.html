@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Management System - CRUD Operations</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .new-appointment-btn {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .appointment-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .appointment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .appointment-id {
+            font-weight: bold;
+            color: #374151;
+        }
+        .appointment-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .action-btn {
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: #6b7280;
+        }
+        .edit-btn:hover {
+            color: #2563eb;
+        }
+        .delete-btn:hover {
+            color: #dc2626;
+        }
+        .appointment-details {
+            color: #4b5563;
+            line-height: 1.6;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            background-color: #dcfce7;
+            color: #166534;
+            font-size: 14px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 500px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #374151;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .cancel-btn {
+            background-color: #f3f4f6;
+            border: 1px solid #d1d5db;
+        }
+        .save-btn {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Appointments</h1>
+        <button class="new-appointment-btn" onclick="showModal()">
+            <i class="fas fa-plus"></i> New Appointment
+        </button>
+    </div>
+
+    <div id="appointmentsList">
+        <!-- Appointments will be loaded here -->
+    </div>
+
+    <!-- Modal Form -->
+    <div id="appointmentModal" class="modal">
+        <div class="modal-content">
+            <h2>New Appointment</h2>
+            <form id="appointmentForm">
+                <div class="form-group">
+                    <label for="patientId">Patient ID</label>
+                    <input type="text" id="patientId" required>
+                </div>
+                <div class="form-group">
+                    <label for="doctor">Doctor</label>
+                    <select id="doctor" required>
+                        <option value="">Select Doctor</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="appointmentDate">Date & Time</label>
+                    <input type="datetime-local" id="appointmentDate" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="modal-btn cancel-btn" onclick="hideModal()">Cancel</button>
+                    <button type="submit" class="modal-btn save-btn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = 'https://mini-pj-bn.vercel.app';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAppointments();
+            loadDoctors();
+        });
+
+        // Load all appointments
+        async function loadAppointments() {
+    try {
+        const response = await fetch(`${BASE_URL}/getAppointments/`);
+        const appointments = await response.json();
+        console.log('Appointments:', appointments);  // เพิ่มคำสั่งนี้เพื่อตรวจสอบ
+        const appointmentsList = document.getElementById('appointmentsList');
+        appointmentsList.innerHTML = '';
+
+        appointments.forEach(appointment => {
+            appointmentsList.innerHTML += `
+                <div class="appointment-card">
+                    <div class="appointment-header">
+                        <span class="appointment-id">${appointment.appointment_id}</span>
+                        <div class="appointment-actions">
+                            <button class="action-btn edit-btn" onclick="editAppointment('${appointment.appointment_id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-btn delete-btn" onclick="deleteAppointment('${appointment.appointment_id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="appointment-details">
+                        <p>Patient: ${appointment.user_id}</p>
+                        <p>Doctor: ${appointment.doctor_id}</p>
+                        <p>Date: ${new Date(appointment.appointment_date).toLocaleString()}</p>
+                        <div class="status-badge">${appointment.status}</div>
+                    </div>
+                </div>
+            `;
+        });
+    } catch (error) {
+        console.error('Error loading appointments:', error);
+    }
+}
+
+
+        // Load doctors for dropdown
+        async function loadDoctors() {
+            try {
+                const response = await fetch(`${BASE_URL}/getDoctors/`);
+                const doctors = await response.json();
+                
+                const doctorSelect = document.getElementById('doctor');
+                doctorSelect.innerHTML = '<option value="">Select Doctor</option>';
+                
+                doctors.forEach(doctor => {
+                    doctorSelect.innerHTML += `
+                        <option value="${doctor.id}">${doctor.name}</option>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error loading doctors:', error);
+            }
+        }
+
+        // Add new appointment
+async function addAppointment(formData) {
+    try {
+        const response = await fetch(`${BASE_URL}/addAppointments/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (response.ok) {
+            alert("Appointment Added Successfully");  // แจ้งเตือนเมื่อเพิ่มข้อมูลสำเร็จ
+            hideModal();
+            loadAppointments();  // โหลดข้อมูลใหม่หลังจากเพิ่มสำเร็จ
+        } else {
+            console.error('Failed to add appointment');
+            alert("Failed to add appointment");
+        }
+    } catch (error) {
+        console.error('Error adding appointment:', error);
+    }
+}
+
+
+        // Delete appointment
+        async function deleteAppointment(id) {
+    if (confirm('Are you sure you want to delete this appointment?')) {
+        try {
+            const response = await fetch(`${BASE_URL}/deleteAppointments`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ appointment_id: id })
+            });
+            
+            const result = await response.json();
+            
+            if (!result.error) {
+                alert('Appointment deleted successfully');
+                await loadAppointments();
+            } else {
+                alert(result.msg || 'Failed to delete appointment');
+            }
+        } catch (error) {
+            console.error('Error deleting appointment:', error);
+            alert('Error deleting appointment');
+        }
+    }
+}
+        // Show modal
+        function showModal() {
+            document.getElementById('appointmentModal').style.display = 'block';
+        }
+
+        // Hide modal
+        function hideModal() {
+            document.getElementById('appointmentModal').style.display = 'none';
+            document.getElementById('appointmentForm').reset();
+        }
+
+        // Form submit handler
+        document.getElementById('appointmentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = {
+                patientId: document.getElementById('patientId').value,
+                doctorId: document.getElementById('doctor').value,
+                date: document.getElementById('appointmentDate').value,
+                status: 'Scheduled'
+            };
+
+            addAppointment(formData);
+        });
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('appointmentModal')) {
+                hideModal();
+            }
+        }
+    </script>
+</body>
+</html>
