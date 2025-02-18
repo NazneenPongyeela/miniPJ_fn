@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hospital Management System - CRUD Operations</title>
+    <title>Appointment Management</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -179,7 +179,7 @@
     try {
         const response = await fetch(`${BASE_URL}/getAppointments/`);
         const appointments = await response.json();
-        console.log('Appointments:', appointments);  // เพิ่มคำสั่งนี้เพื่อตรวจสอบ
+        console.log('Appointments:', appointments); 
         const appointmentsList = document.getElementById('appointmentsList');
         appointmentsList.innerHTML = '';
 
@@ -201,7 +201,6 @@
                         <p>Patient: ${appointment.user_id}</p>
                         <p>Doctor: ${appointment.doctor_id}</p>
                         <p>Date: ${new Date(appointment.appointment_date).toLocaleString()}</p>
-                        <div class="status-badge">${appointment.status}</div>
                     </div>
                 </div>
             `;
@@ -232,56 +231,56 @@
         }
 
         // Add new appointment
-async function addAppointment(formData) {
-    try {
-        const response = await fetch(`${BASE_URL}/addAppointments/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-        });
-        
-        if (response.ok) {
-            alert("Appointment Added Successfully");  // แจ้งเตือนเมื่อเพิ่มข้อมูลสำเร็จ
-            hideModal();
-            loadAppointments();  // โหลดข้อมูลใหม่หลังจากเพิ่มสำเร็จ
-        } else {
-            console.error('Failed to add appointment');
-            alert("Failed to add appointment");
+        async function addAppointment(formData) {
+            try {
+                const response = await fetch(`${BASE_URL}/addAppointments/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (response.ok) {
+                    alert("Appointment Added Successfully");  
+                    hideModal();
+                    loadAppointments(); 
+                } else {
+                    console.error('Failed to add appointment');
+                    alert("Failed to add appointment");
+                }
+            } catch (error) {
+                console.error('Error adding appointment:', error);
+            }
         }
-    } catch (error) {
-        console.error('Error adding appointment:', error);
-    }
-}
 
 
         // Delete appointment
         async function deleteAppointment(id) {
-    if (confirm('Are you sure you want to delete this appointment?')) {
-        try {
-            const response = await fetch(`${BASE_URL}/deleteAppointments`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ appointment_id: id })
-            });
-            
-            const result = await response.json();
-            
-            if (!result.error) {
-                alert('Appointment deleted successfully');
-                await loadAppointments();
-            } else {
-                alert(result.msg || 'Failed to delete appointment');
+            if (confirm('Are you sure you want to delete this appointment?')) {
+            try {
+                const response = await fetch(`${BASE_URL}/deleteAppointments`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ appointment_id: id })
+                });
+                
+                const result = await response.json();
+                
+                if (!result.error) {
+                    alert('Appointment deleted successfully');
+                    await loadAppointments();
+                } else {
+                    alert(result.msg || 'Failed to delete appointment');
+                }
+            } catch (error) {
+                console.error('Error deleting appointment:', error);
+                alert('Error deleting appointment');
             }
-        } catch (error) {
-            console.error('Error deleting appointment:', error);
-            alert('Error deleting appointment');
         }
     }
-}
         // Show modal
         function showModal() {
             document.getElementById('appointmentModal').style.display = 'block';
