@@ -129,15 +129,20 @@
     });
 
     async function loadChatHistory() {
-      try {
-        const response = await fetch(`${BASE_URL}/getChatHistory/`);
-        if (!response.ok) throw new Error('Failed to fetch chat history');
-        const data = await response.json();
-        messages = data;
-        renderChatList(messages);
-      } catch (error) {
-        console.error('Error loading chat history:', error);
-      }
+        try {
+            const response = await fetch(`${BASE_URL}/getChatHistory/`);
+            if (!response.ok) throw new Error('Failed to fetch chat history');
+            const data = await response.json();
+            // Sort messages by chat_id in descending order (newest first)
+            messages = data.sort((a, b) => {
+                const aNum = parseInt(a.chat_id.substring(2));
+                const bNum = parseInt(b.chat_id.substring(2));
+                return bNum - aNum;
+            });
+            renderChatList(messages);
+        } catch (error) {
+            console.error('Error loading chat history:', error);
+        }
     }
 
     async function searchChatHistory() {
@@ -248,65 +253,57 @@
     }
 
     async function sendNewChat() {
-  const message = document.getElementById('newChatMessage').value.trim();
-  const patientId = document.getElementById('patientId').value.trim();
-
-  if (!message || !patientId) {
-    alert('Please fill in both Patient ID and Message fields');
-    return;
+      const message = document.getElementById('newChatMessage').value.trim();
+      const patientId = document.getElementById('patientId').value.trim();
+  
+      if (!message || !patientId) {
+          alert('Please fill in both Patient ID and Message fields');
+          return;
+      }
+  
+      try {
+          const payload = { 
+              user_id: patientId, 
+              message: message 
+          };
+  
+          const response = await fetch(`${BASE_URL}/addChatHistory`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+          });
+  
+          const data = await response.json();
+          
+          if (data.error) {
+              throw new Error(data.msg || 'Failed to save chat');
+          }
+  
+          // Reload the chat history to show the new message
+          await loadChatHistory();
+          
+          showNotification('Chat created successfully!');
+          closeChatModal();
+      } catch (error) {
+          console.error('Error sending new chat:', error);
+          alert('Failed to send message: ' + error.message);
+      }
   }
-
-  const payload = { chat_id: chatId, user_id: patientId, message: message };
-
-  console.log("Sending chat:", payload);
-
-  try {
-    const response = await fetch(`${BASE_URL}/addChatHistory`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.msg || 'Failed to save chat');
+  
+    function showNotification(message, type = 'success') {
+      const notification = document.getElementById('notification');
+      const notificationMessage = document.getElementById('notificationMessage');
+      
+      notification.classList.remove('bg-green-500', 'bg-red-500');
+      notification.classList.add(type === 'success' ? 'bg-green-500' : 'bg-red-500');
+      
+      notificationMessage.textContent = message;
+      notification.classList.remove('hidden');
+      
+      setTimeout(() => {
+        notification.classList.add('hidden');
+      }, 3000);
     }
-
-    // เพิ่มแชทใหม่ลงใน messages โดยไม่ต้องโหลดใหม่
-    const newChat = {
-      chat_id: chatId,
-      user_id: patientId,
-      message: message,
-      timestamp: new Date().toISOString() // กำหนด timestamp ปัจจุบัน
-    };
-
-    messages.unshift(newChat); // เพิ่มข้อความใหม่ไปด้านบนของ list
-    renderChatList(messages);  // แสดงรายการแชทใหม่ทันที
-
-    showNotification(`Chat created successfully!`);
-    closeChatModal();
-  } catch (error) {
-    console.error('Error sending new chat:', error);
-    alert('Failed to send message: ' + error.message);
-  }
-}
-
-
-
-  function showNotification(message, type = 'success') {
-    const notification = document.getElementById('notification');
-    const notificationMessage = document.getElementById('notificationMessage');
-    
-    notification.classList.remove('bg-green-500', 'bg-red-500');
-    notification.classList.add(type === 'success' ? 'bg-green-500' : 'bg-red-500');
-    
-    notificationMessage.textContent = message;
-    notification.classList.remove('hidden');
-    
-    setTimeout(() => {
-      notification.classList.add('hidden');
-    }, 3000);
-  }
 
   </script>
 </body>
