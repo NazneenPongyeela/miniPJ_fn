@@ -215,15 +215,15 @@
         // Load doctors for dropdown
         async function loadDoctors() {
             try {
-                const response = await fetch(`${BASE_URL}/getDoctors/`);
+                const response = await fetch('https://mini-pj-bn.vercel.app/getDoctors/');
                 const doctors = await response.json();
                 
-                const doctorSelect = document.getElementById('doctor');
+                const doctorSelect = document.getElementById('txt_doctor_id'); 
                 doctorSelect.innerHTML = '<option value="">Select Doctor</option>';
                 
                 doctors.forEach(doctor => {
                     doctorSelect.innerHTML += `
-                        <option value="${doctor.doctor_id}">${doctor.name}</option>
+                        <option value="${doctor.doctor_id}">${doctor.doctor_id},${doctor.name}</option>
                     `;
                 });
             } catch (error) {
