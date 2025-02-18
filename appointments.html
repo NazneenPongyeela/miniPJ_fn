@@ -169,11 +169,12 @@
     <script>
         const BASE_URL = 'https://mini-pj-bn.vercel.app';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadAppointments();
-            loadDoctors();
-            loadAppointments();
-        });
+        document.addEventListener('DOMContentLoaded', loadDoctors);
+        
+        function showModal() {
+            document.getElementById('appointmentModal').style.display = 'block';
+            loadDoctors(); 
+        }
 
         // Load appointments
         async function loadAppointments() {
