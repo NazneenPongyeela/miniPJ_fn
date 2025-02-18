@@ -73,10 +73,6 @@
         <button onclick="closeChatModal()" class="text-gray-500 hover:text-gray-700">
           <i class="fas fa-times"></i>
         </button>
-        <button onclick="handleEdit('${chat.chat_id}', '${chat.message}')" class="text-gray-400 hover:text-blue-600 transition-colors">
-          <i class="fa-solid fa-pen"></i>
-        </button>
-        
       </div>
       <div class="space-y-4">
         <!-- Added Patient ID Field -->
@@ -143,31 +139,6 @@
         console.error('Error loading chat history:', error);
       }
     }
-    function handleEdit(chatId, currentMessage) {
-  const newMessage = prompt("Edit your message:", currentMessage);
-  if (newMessage === null || newMessage.trim() === "") return;
-  
-  updateChatMessage(chatId, newMessage);
-}
-
-async function updateChatMessage(chatId, newMessage) {
-  try {
-    const response = await fetch(`${BASE_URL}/updateChatHistory`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, message: newMessage })
-    });
-
-    if (!response.ok) throw new Error("Failed to update chat");
-    
-    showNotification("Chat updated successfully!");
-    loadChatHistory(); // Reload chat list
-  } catch (error) {
-    console.error("Error updating chat:", error);
-    showNotification("Error updating chat", "error");
-  }
-}
-
 
     async function searchChatHistory() {
       const chatId = document.getElementById('chatIdInput').value.trim();
@@ -230,23 +201,32 @@ async function updateChatMessage(chatId, newMessage) {
       if (!confirm('Are you sure you want to delete this chat?')) return;
       alert(`(Demo) Deleted chat ID: ${chatId}`);
     }
-      async function handleDelete(chatId) {
-    if (!confirm('Are you sure you want to delete this chat?')) return;
-    
-    try {
-      const response = await fetch(`${BASE_URL}/deleteChatHistory`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ chat_id: chatId })
-      });
+    async function handleDelete(chatId) {
+  if (!confirm('Are you sure you want to delete this chat?')) return;
+  
+  console.log("Deleting chat ID:", chatId); // Debugging
 
-      const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.msg || 'Failed to delete chat');
-      }
+  try {
+    const response = await fetch(`${BASE_URL}/deleteChatHistory`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId })
+    });
+
+    const data = await response.json();
+    console.log("Delete response:", data); // Debugging
+
+    if (data.error) throw new Error(data.msg || 'Failed to delete chat');
+
+    showNotification('Chat deleted successfully!');
+    messages = messages.filter(msg => msg.chat_id !== chatId);
+    renderChatList(messages);
+  } catch (error) {
+    console.error('Error deleting chat:', error);
+    showNotification('Error deleting chat: ' + error.message, 'error');
+  }
+}
+
 
       // Show success notification
       showNotification('Chat deleted successfully!');
@@ -255,11 +235,7 @@ async function updateChatMessage(chatId, newMessage) {
       messages = messages.filter(msg => msg.chat_id !== chatId);
       renderChatList(messages);
       
-    } catch (error) {
-      console.error('Error deleting chat:', error);
-      showNotification('Error deleting chat: ' + error.message, 'error');
-    }
-  }
+    
 
     function openChatModal() {
       chatModal.classList.remove('hidden');
@@ -271,46 +247,51 @@ async function updateChatMessage(chatId, newMessage) {
       document.getElementById('patientId').value = '';
     }
 
-  async function sendNewChat() {
+    async function sendNewChat() {
   const message = document.getElementById('newChatMessage').value.trim();
   const patientId = document.getElementById('patientId').value.trim();
-  
+
   if (!message || !patientId) {
     alert('Please fill in both Patient ID and Message fields');
     return;
   }
-  
+
   const chatId = 'CHT' + Date.now();
-  const payload = {
-    chat_id: chatId,
-    user_id: patientId,
-    message: message
-  };
-  
+  const payload = { chat_id: chatId, user_id: patientId, message: message };
+
+  console.log("Sending chat:", payload);
+
   try {
     const response = await fetch(`${BASE_URL}/addChatHistory`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.msg || 'Failed to save chat');
     }
-    
-    // Show notification with chat details
-    showNotification(`Chat created successfully!\nChat ID: ${chatId}\nPatient ID: ${patientId}`);
-    
+
+    // เพิ่มแชทใหม่ลงใน messages โดยไม่ต้องโหลดใหม่
+    const newChat = {
+      chat_id: chatId,
+      user_id: patientId,
+      message: message,
+      timestamp: new Date().toISOString() // กำหนด timestamp ปัจจุบัน
+    };
+
+    messages.unshift(newChat); // เพิ่มข้อความใหม่ไปด้านบนของ list
+    renderChatList(messages);  // แสดงรายการแชทใหม่ทันที
+
+    showNotification(`Chat created successfully!`);
     closeChatModal();
-    loadChatHistory();
   } catch (error) {
     console.error('Error sending new chat:', error);
     alert('Failed to send message: ' + error.message);
   }
 }
+
 
 
   function showNotification(message, type = 'success') {
