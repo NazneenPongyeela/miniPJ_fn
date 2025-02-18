@@ -230,30 +230,108 @@
             }
         }
 
-        // Add new appointment
-async function addAppointment(formData) {
-    try {
-        const response = await fetch(`${BASE_URL}/addAppointments/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
+        // Form submit handler
+        document.getElementById('appointmentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+        
+            const formData = {
+                appointment_id: generateAppointmentId(), // สร้าง ID อัตโนมัติ
+                user_id: document.getElementById('patientId').value,
+                doctor_id: document.getElementById('doctor').value,
+                appointment_date: formatDate(document.getElementById('appointmentDate').value)
+            };
+        
+            await addAppointment(formData);
         });
         
-        if (response.ok) {
-            alert("Appointment Added Successfully");  // แจ้งเตือนเมื่อเพิ่มข้อมูลสำเร็จ
-            hideModal();
-            loadAppointments();  // โหลดข้อมูลใหม่หลังจากเพิ่มสำเร็จ
-        } else {
-            console.error('Failed to add appointment');
-            alert("Failed to add appointment");
+        // Function to generate appointment ID
+        function generateAppointmentId() {
+            return 'APT' + Date.now();
         }
-    } catch (error) {
-        console.error('Error adding appointment:', error);
-    }
-}
+        
+        // Function to format date to YYYY-MM-DD
+        function formatDate(dateTimeString) {
+            return dateTimeString.split('T')[0];
+        }
+        
+        // Add new appointment
+        async function addAppointment(formData) {
+            try {
+                const response = await fetch(`${BASE_URL}/addAppointments/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                const result = await response.json();
+                
+                if (!result.error) {
+                    alert("Appointment Added Successfully");
+                    hideModal();
+                    await loadAppointments();
+                } else {
+                    alert(result.msg || "Failed to add appointment");
+                }
+            } catch (error) {
+                console.error('Error adding appointment:', error);
+                alert('Error adding appointment: ' + error.message);
+            }
+        }
+        // Edit appointment
+        async function editAppointment(id) {
+            try {
+                // ดึงข้อมูล appointment ที่ต้องการแก้ไข
+                const appointment = await fetch(`${BASE_URL}/getAppointments/${id}`);
+                const data = await appointment.json();
+                
+                if (data && data.length > 0) {
+                    const apt = data[0];
+                    
+                    // แสดง modal พร้อมข้อมูลเดิม
+                    document.getElementById('patientId').value = apt.user_id;
+                    document.getElementById('doctor').value = apt.doctor_id;
+                    document.getElementById('appointmentDate').value = apt.appointment_date.split('T')[0];
+                    
+                    // เปลี่ยน modal เป็นโหมดแก้ไข
+                    document.getElementById('appointmentModal').setAttribute('data-mode', 'edit');
+                    document.getElementById('appointmentModal').setAttribute('data-id', id);
+                    showModal();
+                }
+            } catch (error) {
+                console.error('Error loading appointment:', error);
+                alert('Error loading appointment details');
+            }
+        }
 
+        // Update appointment
+        async function updateAppointment(id, formData) {
+            try {
+                const response = await fetch(`${BASE_URL}/editAppointments`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        appointment_id: id,
+                        ...formData
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!result.error) {
+                    alert("Appointment Updated Successfully");
+                    hideModal();
+                    await loadAppointments();
+                } else {
+                    alert(result.msg || "Failed to update appointment");
+                }
+            } catch (error) {
+                console.error('Error updating appointment:', error);
+                alert('Error updating appointment: ' + error.message);
+            }
+        }
 
         // Delete appointment
         async function deleteAppointment(id) {
