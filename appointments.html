@@ -177,39 +177,42 @@
 
         // Load all appointments
         async function loadAppointments() {
-    try {
-        const response = await fetch(`${BASE_URL}/getAppointments/`);
-        const appointments = await response.json();
-        console.log('Appointments:', appointments); 
-        const appointmentsList = document.getElementById('appointmentsList');
-        appointmentsList.innerHTML = '';
-
-        appointments.forEach(appointment => {
-            appointmentsList.innerHTML += `
-                <div class="appointment-card">
-                    <div class="appointment-header">
-                        <span class="appointment-id">${appointment.appointment_id}</span>
-                        <div class="appointment-actions">
-                            <button class="action-btn edit-btn" onclick="editAppointment('${appointment.appointment_id}')">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="action-btn delete-btn" onclick="deleteAppointment('${appointment.appointment_id}')">
-                                <i class="fas fa-trash"></i>
-                            </button>
+            try {
+                const response = await fetch(`${BASE_URL}/getAppointments/`);
+                const appointments = await response.json();
+                console.log('Loaded appointments:', appointments);
+                
+                const appointmentsList = document.getElementById('appointmentsList');
+                appointmentsList.innerHTML = '';
+        
+                appointments.forEach(appointment => {
+                    const appointmentDate = new Date(appointment.appointment_date);
+                    appointmentsList.innerHTML += `
+                        <div class="appointment-card">
+                            <div class="appointment-header">
+                                <span class="appointment-id">${appointment.appointment_id}</span>
+                                <div class="appointment-actions">
+                                    <button class="action-btn edit-btn" onclick="editAppointment('${appointment.appointment_id}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="action-btn delete-btn" onclick="deleteAppointment('${appointment.appointment_id}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="appointment-details">
+                                <p>Patient ID: ${appointment.user_id}</p>
+                                <p>Doctor ID: ${appointment.doctor_id}</p>
+                                <p>Date: ${appointmentDate.toLocaleString()}</p>
+                            </div>
                         </div>
-                    </div>
-                    <div class="appointment-details">
-                        <p>Patient: ${appointment.user_id}</p>
-                        <p>Doctor: ${appointment.doctor_id}</p>
-                        <p>Date: ${new Date(appointment.appointment_date).toLocaleString()}</p>
-                    </div>
-                </div>
-            `;
-        });
-    } catch (error) {
-        console.error('Error loading appointments:', error);
-    }
-}
+                    `;
+                });
+            } catch (error) {
+                console.error('Error loading appointments:', error);
+                alert('Error loading appointments. Please check the console for details.');
+            }
+        }
 
         async function loadDoctors() {
             try {
@@ -306,16 +309,48 @@
         }
 
         // Form submit handler
-        document.getElementById('appointmentForm').addEventListener('submit', function(e) {
+        document.getElementById('appointmentForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            const appointmentDate = new Date(document.getElementById('appointmentDate').value);
+            const formattedDate = appointmentDate.toISOString().slice(0, 19).replace('T', ' ');
+            
+            // Generate an appointment ID using current timestamp
+            const timestamp = new Date().getTime();
+            const appointmentId = `APT${timestamp}`;
         
             const formData = {
+                appointment_id: appointmentId,
                 user_id: document.getElementById('patientId').value,
                 doctor_id: document.getElementById('doctor').value,
-                appointment_date: document.getElementById('appointmentDate').value
+                appointment_date: formattedDate // Format: 'YYYY-MM-DD HH:mm:ss'
             };
         
-            addAppointment(formData);
+            console.log('Sending appointment data:', formData); // Debug log
+        
+            try {
+                const response = await fetch(`${BASE_URL}/addAppointments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                console.log('API Response:', result); // Debug log
+                
+                if (!result.error) {
+                    alert(result.msg || "Appointment Added Successfully");
+                    hideModal();
+                    await loadAppointments();
+                } else {
+                    alert(result.msg || "Failed to add appointment");
+                }
+            } catch (error) {
+                console.error('Error adding appointment:', error);
+                alert("Error adding appointment. Please check the console for details.");
+            }
         });
 
         // Close modal when clicking outside
