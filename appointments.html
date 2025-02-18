@@ -210,8 +210,6 @@
     }
 }
 
-
-        // Load doctors for dropdown
         async function loadDoctors() {
             try {
                 const response = await fetch(`${BASE_URL}/getDoctors/`);
@@ -222,7 +220,7 @@
                 
                 doctors.forEach(doctor => {
                     doctorSelect.innerHTML += `
-                        <option value="${doctor.doctor_id}">${doctor.doctor_id}, ${doctor.name}</option>
+                        <option value="${doctor.doctor_id}">${doctor.name} - ${doctor.expertise}</option>
                     `;
                 });
             } catch (error) {
@@ -230,27 +228,39 @@
             }
         }
 
-        // Add new appointment
         async function addAppointment(formData) {
             try {
-                const response = await fetch(`${BASE_URL}/addAppointments/`, {
+                // สร้าง appointment_id (ตัวอย่างเช่น ใช้ timestamp)
+                const timestamp = new Date().getTime();
+                const appointmentId = `APT${timestamp}`;
+        
+                const appointmentData = {
+                    appointment_id: appointmentId,
+                    user_id: formData.user_id,
+                    doctor_id: formData.doctor_id,
+                    appointment_date: formData.appointment_date
+                };
+        
+                const response = await fetch(`${BASE_URL}/addAppointments`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify(appointmentData)
                 });
                 
-                if (response.ok) {
-                    alert("Appointment Added Successfully");  
+                const result = await response.json();
+                
+                if (!result.error) {
+                    alert(result.msg || "Appointment Added Successfully");
                     hideModal();
-                    loadAppointments(); 
+                    loadAppointments();
                 } else {
-                    console.error('Failed to add appointment');
-                    alert("Failed to add appointment");
+                    alert(result.msg || "Failed to add appointment");
                 }
             } catch (error) {
                 console.error('Error adding appointment:', error);
+                alert("Error adding appointment");
             }
         }
 
@@ -295,16 +305,15 @@
         }
 
         // Form submit handler
-            document.getElementById('appointmentForm').addEventListener('submit', function(e) {
+        document.getElementById('appointmentForm').addEventListener('submit', function(e) {
             e.preventDefault();
-
+        
             const formData = {
-                user_id: document.getElementById('user_id').value,
-                doctor_id: document.getElementById('doctor_id').value,
-                appointment_date: document.getElementById('appointment_date').value,
-                status: 'Scheduled'
+                user_id: document.getElementById('patientId').value,
+                doctor_id: document.getElementById('doctor').value,
+                appointment_date: document.getElementById('appointmentDate').value
             };
-
+        
             addAppointment(formData);
         });
 
