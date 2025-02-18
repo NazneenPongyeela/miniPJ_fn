@@ -281,6 +281,8 @@
             }
         }
     }
+
+        
         // Show modal
         function showModal() {
             document.getElementById('appointmentModal').style.display = 'block';
@@ -293,13 +295,13 @@
         }
 
         // Form submit handler
-        document.getElementById('appointmentForm').addEventListener('submit', function(e) {
+            document.getElementById('appointmentForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
             const formData = {
-                patientId: document.getElementById('patientId').value,
-                doctorId: document.getElementById('doctor').value,
-                date: document.getElementById('appointmentDate').value,
+                patientId: document.getElementById('user_id').value,
+                doctorId: document.getElementById('doctor_id').value,
+                date: document.getElementById('appointment_date').value,
                 status: 'Scheduled'
             };
 
