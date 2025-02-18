@@ -119,51 +119,49 @@
             </div>
         </div>
     </nav>
-    
-    <div class="dashboard-header d-flex justify-content-between align-items-center">
-        <h1 class="dashboard-title">Medical Appointment System</h1>
-        <button class="new-appointment-btn" onclick="showModal()">
-            <i class="fas fa-plus"></i> New Appointment
-        </button>
-    </div>
 
-    <div class="container">
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Medical Appointment System</h1>
+            <button class="btn btn-primary" onclick="showModal()">
+                <i class="fas fa-plus"></i> New Appointment
+            </button>
+        </div>
+
+        <!-- Card Container -->
         <div id="card_doctor_list" class="row g-4">
-            <!-- Appointments will be loaded here -->
+            <!-- Cards will be inserted here -->
         </div>
     </div>
+
 
     <!-- Modal Form -->
     <div id="appointmentModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="FormModalLabel" class="modal-title">New Appointment</h2>
-            </div>
+            <h2 id="FormModalLabel">New Appointment</h2>
             <form id="appointmentForm" onsubmit="save_appointment(event)">
-                <div class="modal-body">
-                    <input type="hidden" id="edit_type" value="new">
-                    <div class="form-group" id="form_appointment_id">
-                        <label for="txt_appointment_id">Appointment ID</label>
-                        <input type="text" id="txt_appointment_id" class="form-control" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="txt_user_id">Patient ID</label>
-                        <input type="text" id="txt_user_id" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="txt_doctor_id">Doctor</label>
-                        <select id="txt_doctor_id" class="form-control" required>
-                            <option value="">Select Doctor</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="form_appointment_date">Date & Time</label>
-                        <input type="datetime-local" id="form_appointment_date" class="form-control" required>
-                    </div>
+                <input type="hidden" id="edit_type" value="new">
+                <div class="form-group" id="form_appointment_id">
+                    <label for="txt_appointment_id">Appointment ID</label>
+                    <input type="text" id="txt_appointment_id" readonly>
                 </div>
-                <div class="modal-actions d-flex justify-content-end gap-2">
-                    <button type="button" class="modal-btn cancel-btn" onclick="hideModal()">Cancel</button>
-                    <button type="submit" class="modal-btn save-btn">Save</button>
+                <div class="form-group">
+                    <label for="txt_user_id">Patient ID</label>
+                    <input type="text" id="txt_user_id" required>
+                </div>
+                <div class="form-group">
+                    <label for="txt_doctor_id">Doctor</label>
+                    <select id="txt_doctor_id" required>
+                        <option value="">Select Doctor</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="form_appointment_date">Date & Time</label>
+                    <input type="datetime-local" id="form_appointment_date" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="modal-btn cancel-btn" onclick="hideModal()">ยกเลิก</button>
+                    <button type="submit" class="modal-btn save-btn">บันทึก</button>
                 </div>
             </form>
         </div>
