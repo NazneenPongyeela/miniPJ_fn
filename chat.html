@@ -153,22 +153,24 @@
     }
 
     async function searchChatHistory() {
-      const chatId = document.getElementById('chatIdInput').value.trim();
-      if (!chatId) {
-        loadChatHistory();
-        return;
-      }
+  const chatId = document.getElementById('chatIdInput').value.trim();
+  if (!chatId) {
+    loadChatHistory();
+    return;
+  }
 
-      try {
-        const filteredMessages = messages.filter(msg => 
-          msg.chatId.toLowerCase().includes(chatId.toLowerCase())
-        );
-        renderChatList(filteredMessages);
-      } catch (error) {
-        console.error('Error searching chat history:', error);
-        alert('Error searching chat history: ' + error.message);
-      }
-    }
+  try {
+    const filteredMessages = messages.filter(msg => 
+      (msg.chatId && msg.chatId.toLowerCase().includes(chatId.toLowerCase())) ||
+      (msg.user_id && String(msg.user_id).toLowerCase().includes(chatId.toLowerCase()))
+    );
+    renderChatList(filteredMessages);
+  } catch (error) {
+    console.error('Error searching chat history:', error);
+    alert('Error searching chat history: ' + error.message);
+  }
+}
+
 
     function renderChatList(chats) {
       chatList.innerHTML = '';
@@ -281,7 +283,7 @@
         console.log("Response from API:", responseData);
 
         if (!response.ok) {
-          throw new Error(responseData.msg || 'Failed to save chat');
+          throw new Error(responseData.msg || 'Failed to save chat')
         }
 
         // อัพเดต UI หรือข้อมูลในหน้าเว็บหลังการส่งสำเร็จ
@@ -309,3 +311,4 @@
   </script>
 </body>
 </html>
+
