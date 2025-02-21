@@ -283,7 +283,7 @@
         console.log("Response from API:", responseData);
 
         if (!response.ok) {
-          throw new Error(responseData.msg || 'Failed to save chat')
+          throw new Error(responseData.msg || 'Failed to save chat');
         }
 
         // อัพเดต UI หรือข้อมูลในหน้าเว็บหลังการส่งสำเร็จ
@@ -311,4 +311,3 @@
   </script>
 </body>
 </html>
-
