@@ -154,6 +154,10 @@
                         <option value="">Select Doctor</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="appointmentDate">Appointment Date</label>
+                    <input type="date" id="appointmentDate" required>
+                </div>
                 <div class="modal-actions">
                     <button type="button" class="modal-btn cancel-btn" onclick="hideModal()">Cancel</button>
                     <button type="submit" class="modal-btn save-btn">Save</button>
@@ -182,7 +186,7 @@
                 appointmentsList.innerHTML = '';
         
                 appointments.forEach(appointment => {
-                    const appointmentDate = new Date(appointment.appointment_date);
+                    const appointmentDate = new Date(appointment.appointment_date).toLocaleDateString();
                     appointmentsList.innerHTML += `
                         <div class="appointment-card">
                             <div class="appointment-header">
@@ -199,6 +203,7 @@
                             <div class="appointment-details">
                                 <p>Patient ID: ${appointment.user_id}</p>
                                 <p>Doctor ID: ${appointment.doctor_id}</p>
+                                <p>Date: ${appointmentDate}</p>
                             </div>
                         </div>
                     `;
@@ -267,7 +272,8 @@
 
             const formData = {
                 user_id: document.getElementById('patientId').value,
-                doctor_id: document.getElementById('doctor').value
+                doctor_id: document.getElementById('doctor').value,
+                appointment_date: document.getElementById('appointmentDate').value
             };
 
             console.log('Sending appointment data:', formData);
