@@ -151,23 +151,23 @@
     }
 
     async function searchChatHistory() {
-  const chatId = document.getElementById('chatIdInput').value.trim();
-  if (!chatId) {
-    loadChatHistory();
-    return;
-  }
-
-  try {
-    const filteredMessages = messages.filter(msg => 
-      (msg.chatId && msg.chatId.toLowerCase().includes(chatId.toLowerCase())) ||
-      (msg.user_id && String(msg.user_id).toLowerCase().includes(chatId.toLowerCase()))
-    );
-    renderChatList(filteredMessages);
-  } catch (error) {
-    console.error('Error searching chat history:', error);
-    alert('Error searching chat history: ' + error.message);
-  }
-}
+      const chatId = document.getElementById('chatIdInput').value.trim();
+      if (!chatId) {
+        loadChatHistory();
+        return;
+      }
+    
+      try {
+        const filteredMessages = messages.filter(msg => 
+          (msg.chatId && msg.chatId.toLowerCase().includes(chatId.toLowerCase())) ||
+          (msg.user_id && String(msg.user_id).toLowerCase().includes(chatId.toLowerCase()))
+        );
+        renderChatList(filteredMessages);
+      } catch (error) {
+        console.error('Error searching chat history:', error);
+        alert('Error searching chat history: ' + error.message);
+      }
+    }
 
 
     function renderChatList(chats) {
@@ -254,42 +254,38 @@
     async function sendNewChat() {
       const message = document.getElementById('newChatMessage').value.trim();
       const patientId = document.getElementById('patientId').value.trim();
-      const doctorId = document.getElementById('doctorId').value.trim(); // ดึงค่า doctorId
-
-      // ตรวจสอบข้อมูลว่ามีการป้อนค่าแล้ว
+      const doctorId = document.getElementById('doctorId').value.trim();
+    
       if (!message || !patientId || !doctorId) {
-        alert('Please fill in all fields: Patient ID, Doctor ID, and Message');
+        showNotification('Please fill in all fields: Patient ID, Doctor ID, and Message', 'error');
         return;
       }
-
+    
       const chatId = 'CHT' + Date.now();
-      const payload = { chat_id: chatId, user_id: patientId, doctor_id: doctorId, message: message }; // ส่ง doctorId
-
+      const payload = {
+        chat_id: chatId,
+        user_id: patientId,
+        doctor_id: doctorId,
+        message: message
+      };
+    
       console.log("Sending chat:", payload);
-
+    
       try {
-        const response = await fetch(`${BASE_URL}/addChatHistory`, {
+        const response = await fetch(`${BASE_URL}/addChatHistory`, { // Fixed URL to use BASE_URL
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json', // ตรวจสอบว่าตั้งค่าเป็น json
+            'Content-Type': 'application/json',
           },
-          body: JSON.stringify(payload), // ส่งข้อมูลที่เป็น JSON
+          body: JSON.stringify(payload),
         });
-
+    
         const responseData = await response.json();
         console.log("Response from API:", responseData);
-
-        if (!response.ok) {
+    
+        if (responseData.error) {
           throw new Error(responseData.msg || 'Failed to save chat');
         }
-
-        // อัพเดต UI หรือข้อมูลในหน้าเว็บหลังการส่งสำเร็จ
-        alert('Chat saved successfully');
-      } catch (error) {
-        console.error('Error sending new chat:', error);
-        alert('Failed to send message: ' + error.message);
-      }
-    }
 
     function showNotification(message, type = 'success') {
       const notification = document.getElementById('notification');
