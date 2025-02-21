@@ -154,6 +154,10 @@
                         <option value="">Select Doctor</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="appointmentDate">Appointment Date</label>
+                    <input type="date" id="appointmentDate" required>
+                </div>
                 <div class="modal-actions">
                     <button type="button" class="modal-btn cancel-btn" onclick="hideModal()">Cancel</button>
                     <button type="submit" class="modal-btn save-btn">Save</button>
@@ -161,6 +165,33 @@
             </form>
         </div>
     </div>
+
+    <div id="editAppointmentModal" class="modal">
+        <div class="modal-content">
+            <h2>Edit Appointment</h2>
+            <form id="editAppointmentForm">
+                <input type="hidden" id="editAppointmentId">
+                <div class="form-group">
+                    <label for="editPatientId">Patient ID</label>
+                    <input type="text" id="editPatientId" required>
+                </div>
+                <div class="form-group">
+                    <label for="editDoctor">Doctor</label>
+                    <select id="editDoctor" required>
+                        <option value="">Select Doctor</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editAppointmentDate">Appointment Date</label>
+                    <input type="date" id="editAppointmentDate" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="modal-btn cancel-btn" onclick="hideEditModal()">Cancel</button>
+                    <button type="submit" class="modal-btn save-btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>    
 
     <script>
         const BASE_URL = 'https://mini-pj-bn.vercel.app';
@@ -171,24 +202,24 @@
             loadAppointments();
         });
 
-        // Load all appointments
         async function loadAppointments() {
             try {
                 const response = await fetch(`${BASE_URL}/getAppointments/`);
                 const appointments = await response.json();
-                console.log('Loaded appointments:', appointments);
-                
+                console.log('📋 Loaded appointments:', appointments);
+
                 const appointmentsList = document.getElementById('appointmentsList');
                 appointmentsList.innerHTML = '';
-        
+
                 appointments.forEach(appointment => {
-                    const appointmentDate = new Date(appointment.appointment_date);
+                    const appointmentDate = new Date(appointment.appointment_date).toLocaleDateString('en-GB'); // แปลงวันที่ให้อ่านง่าย
+
                     appointmentsList.innerHTML += `
                         <div class="appointment-card">
                             <div class="appointment-header">
                                 <span class="appointment-id">${appointment.appointment_id}</span>
                                 <div class="appointment-actions">
-                                    <button class="action-btn edit-btn" onclick="editAppointment('${appointment.appointment_id}')">
+                                    <button class="action-btn edit-btn" onclick="editAppointment('${appointment.appointment_id}', '${appointment.user_id}', '${appointment.doctor_id}', '${appointment.appointment_date}')">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     <button class="action-btn delete-btn" onclick="deleteAppointment('${appointment.appointment_id}')">
@@ -197,33 +228,38 @@
                                 </div>
                             </div>
                             <div class="appointment-details">
-                                <p>Patient ID: ${appointment.user_id}</p>
-                                <p>Doctor ID: ${appointment.doctor_id}</p>
+                                <p><strong>Patient ID:</strong> ${appointment.user_id}</p>
+                                <p><strong>Doctor ID:</strong> ${appointment.doctor_id}</p>
+                                <p><strong>Appointment Date:</strong> ${appointmentDate}</p> <!-- 🗓 เพิ่มวันที่ -->
                             </div>
                         </div>
                     `;
                 });
             } catch (error) {
-                console.error('Error loading appointments:', error);
+                console.error('❌ Error loading appointments:', error);
                 alert('Error loading appointments. Please check the console for details.');
             }
         }
+
         
         async function loadDoctors() {
             try {
                 const response = await fetch(`${BASE_URL}/getDoctors/`);
                 const doctors = await response.json();
-                
+
                 const doctorSelect = document.getElementById('doctor');
                 doctorSelect.innerHTML = '<option value="">Select Doctor</option>';
-                
+
+                const editDoctorSelect = document.getElementById('editDoctor');
+                editDoctorSelect.innerHTML = '<option value="">Select Doctor</option>';
+
                 doctors.forEach(doctor => {
-                    doctorSelect.innerHTML += `
-                        <option value="${doctor.doctor_id}">${doctor.doctor_id}</option>
-                    `;
+                    const option = `<option value="${doctor.doctor_id}">${doctor.doctor_id}</option>`;
+                    doctorSelect.innerHTML += option;
+                    editDoctorSelect.innerHTML += option;
                 });
             } catch (error) {
-                console.error('Error loading doctors:', error);
+                console.error('❌ Error loading doctors:', error);
             }
         }
 
@@ -253,6 +289,60 @@
             }
         }
 
+        async function editAppointment(id, userId, doctorId, appointmentDate) {
+            console.log("🛠 Editing appointment:", { id, userId, doctorId, appointmentDate }); 
+
+            document.getElementById('editAppointmentId').value = id;
+            document.getElementById('editPatientId').value = userId;
+            document.getElementById('editAppointmentDate').value = appointmentDate;
+
+            await loadDoctors();
+
+            document.getElementById('editDoctor').value = doctorId;
+
+            document.getElementById('editAppointmentModal').style.display = 'block';
+        }
+
+
+        function hideEditModal() {
+            document.getElementById('editAppointmentModal').style.display = 'none';
+        }
+
+        document.getElementById('editAppointmentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = {
+                appointment_id: document.getElementById('editAppointmentId').value,
+                user_id: document.getElementById('editPatientId').value,
+                doctor_id: document.getElementById('editDoctor').value,
+                appointment_date: document.getElementById('editAppointmentDate').value
+            };
+
+            console.log('✏️ Editing appointment:', formData);
+
+            try {
+                const response = await fetch(`${BASE_URL}/editAppointments`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                console.log('📩 Edit API Response:', result);
+
+                if (!result.error) {
+                    alert(result.msg || "Appointment Updated Successfully");
+                    hideEditModal();
+                    await loadAppointments();
+                } else {
+                    alert(result.msg || "Failed to update appointment");
+                }
+            } catch (error) {
+                console.error('❌ Error updating appointment:', error);
+                alert("Error updating appointment. Check the console.");
+            }
+        });
+
         function showModal() {
             document.getElementById('appointmentModal').style.display = 'block';
         }
@@ -265,12 +355,14 @@
         document.getElementById('appointmentForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
+            const dateInput = document.getElementById('appointmentDate').value;
             const formData = {
                 user_id: document.getElementById('patientId').value,
-                doctor_id: document.getElementById('doctor').value
+                doctor_id: document.getElementById('doctor').value,
+                appointment_date: dateInput
             };
 
-            console.log('Sending appointment data:', formData);
+            console.log('🚀 Sending appointment data:', formData); // Debug
 
             try {
                 const response = await fetch(`${BASE_URL}/addAppointments`, {
@@ -280,10 +372,10 @@
                     },
                     body: JSON.stringify(formData)
                 });
-                
+
                 const result = await response.json();
-                console.log('API Response:', result);
-                
+                console.log('📩 API Response:', result); // Debug
+
                 if (!result.error) {
                     alert(result.msg || "Appointment Added Successfully");
                     hideModal();
@@ -292,8 +384,8 @@
                     alert(result.msg || "Failed to add appointment");
                 }
             } catch (error) {
-                console.error('Error adding appointment:', error);
-                alert("Error adding appointment. Please check the console for details.");
+                console.error('❌ Error adding appointment:', error);
+                alert("Error adding appointment. Check the console.");
             }
         });
 
