@@ -154,24 +154,6 @@
                         <option value="">Select Doctor</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="appointmentYear">Year</label>
-                    <select id="appointmentYear" required>
-                        <option value="">Select Year</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="appointmentMonth">Month</label>
-                    <select id="appointmentMonth" required>
-                        <option value="">Select Month</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="appointmentDay">Day</label>
-                    <select id="appointmentDay" required>
-                        <option value="">Select Day</option>
-                    </select>
-                </div>
                 <div class="modal-actions">
                     <button type="button" class="modal-btn cancel-btn" onclick="hideModal()">Cancel</button>
                     <button type="submit" class="modal-btn save-btn">Save</button>
@@ -194,14 +176,13 @@
             try {
                 const response = await fetch(`${BASE_URL}/getAppointments/`);
                 const appointments = await response.json();
+                console.log('Loaded appointments:', appointments);
                 
                 const appointmentsList = document.getElementById('appointmentsList');
                 appointmentsList.innerHTML = '';
         
                 appointments.forEach(appointment => {
-                    const [year, month, day] = appointment.appointment_date.split('T')[0].split('-');
-                    const formattedDate = `${year}/${month}/${day}`;
-                    
+                    const appointmentDate = new Date(appointment.appointment_date);
                     appointmentsList.innerHTML += `
                         <div class="appointment-card">
                             <div class="appointment-header">
@@ -218,7 +199,6 @@
                             <div class="appointment-details">
                                 <p>Patient ID: ${appointment.user_id}</p>
                                 <p>Doctor ID: ${appointment.doctor_id}</p>
-                                <p>Date: ${formattedDate}</p>
                             </div>
                         </div>
                     `;
@@ -273,48 +253,8 @@
             }
         }
 
-        function initializeDateDropdowns() {
-            const yearSelect = document.getElementById('appointmentYear');
-            const monthSelect = document.getElementById('appointmentMonth');
-            const daySelect = document.getElementById('appointmentDay');
-            
-            // Add years (current year + 5 years ahead)
-            const currentYear = new Date().getFullYear();
-            for (let year = currentYear; year <= currentYear + 5; year++) {
-                yearSelect.innerHTML += `<option value="${year}">${year}</option>`;
-            }
-            
-            // Add months
-            for (let month = 1; month <= 12; month++) {
-                const monthValue = month.toString().padStart(2, '0');
-                monthSelect.innerHTML += `<option value="${monthValue}">${monthValue}</option>`;
-            }
-            
-            // Update days based on selected year and month
-            function updateDays() {
-                const year = parseInt(yearSelect.value) || currentYear;
-                const month = parseInt(monthSelect.value) || 1;
-                const daysInMonth = new Date(year, month, 0).getDate();
-                
-                daySelect.innerHTML = '<option value="">Select Day</option>';
-                for (let day = 1; day <= daysInMonth; day++) {
-                    const dayValue = day.toString().padStart(2, '0');
-                    daySelect.innerHTML += `<option value="${dayValue}">${dayValue}</option>`;
-                }
-            }
-            
-            yearSelect.addEventListener('change', updateDays);
-            monthSelect.addEventListener('change', updateDays);
-            
-            // Initial days population
-            updateDays();
-        }
-
-        
-
         function showModal() {
             document.getElementById('appointmentModal').style.display = 'block';
-            initializeDateDropdowns();
         }
 
         function hideModal() {
@@ -325,15 +265,9 @@
         document.getElementById('appointmentForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            const year = document.getElementById('appointmentYear').value;
-            const month = document.getElementById('appointmentMonth').value;
-            const day = document.getElementById('appointmentDay').value;
-            const appointmentDate = `${year}/${month}/${day}`;
-
             const formData = {
                 user_id: document.getElementById('patientId').value,
-                doctor_id: document.getElementById('doctor').value,
-                appointment_date: appointmentDate
+                doctor_id: document.getElementById('doctor').value
             };
 
             console.log('Sending appointment data:', formData);
