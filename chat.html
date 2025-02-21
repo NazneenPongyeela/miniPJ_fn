@@ -268,7 +268,7 @@
       console.log("Sending chat:", payload);
 
       try {
-        const response = await fetch('http://localhost:3000/addChatHistory', {
+        const response = await fetch(`${BASE_URL}/addChatHistory`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json', // ตรวจสอบว่าตั้งค่าเป็น json
